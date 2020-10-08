@@ -3,7 +3,7 @@
 Pod::Spec.new do |spec|
 
   spec.name         = "HWNavigationView"
-  spec.version      = "1.0.1"
+  spec.version      = "1.0.2"
   spec.summary      = "HWNavigationView"
   spec.swift_version   = '5.0'
   spec.license      = 'MIT'
@@ -65,7 +65,7 @@ Navigation view whose shape changes depending on the scroll position
   #  Supports git, hg, bzr, svn and HTTP.
   #
 
-  spec.source       = { :git => "https://github.com/HanweeeeLee/HWNavigationView.git", :tag => "1.0.1" }
+  spec.source       = { :git => "https://github.com/HanweeeeLee/HWNavigationView.git", :tag => "1.0.2" }
 
 
   # ――― Source Code ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――― #
