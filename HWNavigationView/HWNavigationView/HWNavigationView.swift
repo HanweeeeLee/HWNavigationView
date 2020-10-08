@@ -8,6 +8,10 @@
 
 import UIKit
 
+public protocol HWNavigationViewDelegate:class {
+    func scrollViewDidScroll(navigationView:HWNavigationView,percent:CGFloat)
+}
+
 public class HWNavigationView: UIView {
     
     public struct HWNavigationEffectObject {
@@ -16,6 +20,10 @@ public class HWNavigationView: UIView {
     }
     
     public struct HWNavigationFromTo:Equatable {
+        public init(from:CGFloat,to:CGFloat) {
+            self.from = from
+            self.to = to
+        }
         var from:CGFloat
         var to:CGFloat
     }
@@ -28,10 +36,29 @@ public class HWNavigationView: UIView {
         case labelFontSizeIncrease(minFontSize:CGFloat,maxFontSize:CGFloat)
         case labelFontSizeDecrease(minFontSize:CGFloat,maxFontSize:CGFloat)
         case replaceConstant(leading:HWNavigationFromTo?,trailling:HWNavigationFromTo?,top:HWNavigationFromTo?,bottom:HWNavigationFromTo?)
+        case moveHorizonalDirection(from:HWNavigationCenterXDirection,to:HWNavigationCenterXDirection)
+    }
+    
+    public enum HWNavigationCenterXDirection:Equatable {
+        case left(offset:CGFloat)
+        case center(offset:CGFloat)
+        case right(offset:CGFloat)
+        
+        func rawValue() -> Int {
+            switch self {
+            case .left:
+                return 0
+            case .center:
+                return 1
+            case .right:
+                return 2
+            }
+        }
     }
     
     //MARK: public property
     
+    public weak var delegate:HWNavigationViewDelegate?
     public var lineView:UIView = UIView()
     public var showEffetOffset:CGFloat = 50.0
     
@@ -42,6 +69,7 @@ public class HWNavigationView: UIView {
         didSet {
             if currentYOffset < 0 {
                 if !flagOf0percent {
+                    self.lineView.alpha = 0
                     showEffects(percent: 0)
                     flagOf0percent = true
                 }
@@ -104,7 +132,7 @@ public class HWNavigationView: UIView {
     }
     
     private func showEffects(percent:CGFloat) {
-        print("percent:\(percent)")
+        self.delegate?.scrollViewDidScroll(navigationView: self, percent: percent)
         for i in 0..<self.effectObjects.count {
             let item:HWNavigationEffectObject = self.effectObjects[i]
             if let obj = item.obj {
@@ -149,26 +177,6 @@ public class HWNavigationView: UIView {
                             }
                         }
                         break
-                    case .labelFontSizeIncrease(let minFontSize,let maxFontSize):
-                        if type(of: obj) != UILabel.self {
-                            print("only use UILabel")
-                            return
-                        }
-                        let label:UILabel = obj as! UILabel
-                        let gap:CGFloat = maxFontSize - minFontSize
-                        let size:CGFloat = gap * percent + minFontSize
-                        label.font = UIFont(name: label.font.fontName, size: size)
-                        break
-                    case .labelFontSizeDecrease(let minFontSize,let maxFontSize):
-                        if type(of: obj) != UILabel.self {
-                            print("only use UILabel")
-                            return
-                        }
-                        let label:UILabel = obj as! UILabel
-                        let gap:CGFloat = maxFontSize - minFontSize
-                        let size:CGFloat = gap * (1 - percent) + minFontSize
-                        label.font = UIFont(name: label.font.fontName, size: size)
-                        break
                     case .replaceConstant(leading: let leading, trailling: let trailling, top: let top, bottom: let bottom):
                         if let leadingC = leading, let superView = obj.superview {
                             let leadingLayouts:Array<NSLayoutConstraint> = superView.constraints.filter({
@@ -198,6 +206,41 @@ public class HWNavigationView: UIView {
                             replaceConstant(object: obj, from: bottomC.from, to: bottomC.to, percent: percent, layouts: bottomLayouts)
                         }
                         break
+                    case .moveHorizonalDirection(from: let from, to: let to):
+                        if let superView = obj.superview {
+                            let centerLayouts:Array<NSLayoutConstraint> = superView.constraints.filter({
+                                $0.firstAttribute == .centerX && $0.firstItem as! NSObject == obj
+                            })
+                            let widthLayouts:Array<NSLayoutConstraint> = obj.constraints.filter({
+                                $0.firstAttribute == .width
+                            })
+                            moveCenterXConstraint(object: obj, from: from, to: to, percent: percent, centerLayouts: centerLayouts,widthLayouts: widthLayouts)
+                        }
+                        break
+                    case .labelFontSizeIncrease(let minFontSize,let maxFontSize):
+                        if type(of: obj) != UILabel.self {
+                            print("only use UILabel")
+                            return
+                        }
+                        let label:UILabel = obj as! UILabel
+                        let gap:CGFloat = maxFontSize - minFontSize
+                        let size:Int = Int(gap * percent + minFontSize)
+                        if Int(label.font.pointSize) != size {
+                            label.font = UIFont(name: label.font.fontName, size: CGFloat(size))
+                        }
+                        break
+                    case .labelFontSizeDecrease(let minFontSize,let maxFontSize):
+                        if type(of: obj) != UILabel.self {
+                            print("only use UILabel")
+                            return
+                        }
+                        let label:UILabel = obj as! UILabel
+                        let gap:CGFloat = maxFontSize - minFontSize
+                        let size:Int = Int(gap * (1 - percent) + minFontSize)
+                        if Int(label.font.pointSize) != size {
+                            label.font = UIFont(name: label.font.fontName, size: CGFloat(size))
+                        }
+                        break
                     }
                 }
             }
@@ -221,6 +264,66 @@ public class HWNavigationView: UIView {
             else {
                 $0.constant = from - (gap * percent)
             }
+        }
+    }
+    
+    private func moveCenterXConstraint(object:UIView,from:HWNavigationCenterXDirection,to:HWNavigationCenterXDirection,percent:CGFloat,centerLayouts:Array<NSLayoutConstraint>,widthLayouts:Array<NSLayoutConstraint>) {
+        let width:CGFloat = widthLayouts.count > 0 ? widthLayouts[0].constant : object.frame.width
+        let halfWidth:CGFloat = width/2
+        var startConstraint:CGFloat = 0.0
+        
+        var sourceOffset:CGFloat = 0.0
+        switch from {
+        case .left(let offset):
+            sourceOffset = offset
+            startConstraint = -(UIScreen.main.bounds.width/2 - (halfWidth)) + sourceOffset
+            break
+        case .center(let offset):
+            sourceOffset = offset
+            startConstraint = sourceOffset
+            break
+        case .right(let offset):
+            sourceOffset = offset
+            startConstraint = (UIScreen.main.bounds.width/2 - (halfWidth)) + sourceOffset
+            break
+        }
+        
+        var destinationOffset:CGFloat = 0.0
+        switch to {
+        case .left(let offset):
+            destinationOffset = offset
+            break
+        case .center(let offset):
+            destinationOffset = offset
+            break
+        case .right(let offset):
+            destinationOffset = offset
+            break
+        }
+        
+        var offset:CGFloat = 0
+        switch (to.rawValue() - from.rawValue()) {
+        case -2:
+            offset = -((UIScreen.main.bounds.width/2 * percent - (halfWidth * percent)) * 2) - (sourceOffset * percent) + (destinationOffset * percent)
+            break
+        case -1:
+            offset = -(UIScreen.main.bounds.width/2 * percent - (halfWidth * percent) - (sourceOffset * percent) + (destinationOffset * percent))
+            break
+        case 0:
+            break
+        case 1:
+            offset = (UIScreen.main.bounds.width/2 * percent - (halfWidth * percent) - (sourceOffset * percent) + (destinationOffset * percent))
+            break
+        case 2:
+            offset = (UIScreen.main.bounds.width/2 * percent - (halfWidth * percent)) * 2 - (sourceOffset * percent) + (destinationOffset * percent)
+            break
+        default:
+            print("unexpected error")
+            break
+        }
+        
+        _ = centerLayouts.map {
+            $0.constant = startConstraint + offset
         }
     }
     
@@ -311,6 +414,17 @@ public class HWNavigationView: UIView {
                     replaceConstant(object: object, from: bottomC.from, to: bottomC.to, percent: 0, layouts: bottomLayouts)
                 }
                 break
+            case .moveHorizonalDirection(from: let from, to: let to):
+                if let superView = object.superview {
+                    let centerLayouts:Array<NSLayoutConstraint> = superView.constraints.filter({
+                        $0.firstAttribute == .centerX && $0.firstItem as! NSObject == object
+                    })
+                    let widthLayouts:Array<NSLayoutConstraint> = object.constraints.filter({
+                        $0.firstAttribute == .width
+                    })
+                    moveCenterXConstraint(object: object, from: from, to: to, percent: 0, centerLayouts: centerLayouts,widthLayouts: widthLayouts)
+                }
+                break
             }
             return false
          }
@@ -346,3 +460,4 @@ public class HWNavigationView: UIView {
     }
 
 }
+
