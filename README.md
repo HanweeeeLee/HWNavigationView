@@ -17,7 +17,7 @@ The HWNavigationView is a navigation view that changes shape depending on the po
 navigationView.addEffect(object: myTitleLabel, effets: [.moveHorizonalDirection(from: .left(offset: 10), to: .center(offset: 0)),.labelFontSizeIncrease(minFontSize: 20, maxFontSize: 25)])
 ```
 
-### Note: The scrollViewDidScroll function of HWNavigationView must be called from the scrollViewDidScroll function of ScrollView in the scrollViewDidScroll function of HWNavigationView must be called.
+### Note: The ViewDidScroll function of HWNavigationView should be invoked from the original Scrollview Delegate function, ViewDidScroll function.
 
 ```swift
 func scrollViewDidScroll(_ scrollView: UIScrollView) {
@@ -39,7 +39,7 @@ navigationView.addNavigationResizableHeight(from: 40, to: 60)
 navigationView.addEffect(object: self.imageView, effets: [.fadeIn(minAlpha: 0, maxAlpha: 1),.replaceConstant(leading: HWNavigationView.HWNavigationFromTo(from: 30, to: 10), trailling: nil, top: HWNavigationView.HWNavigationFromTo(from: 0, to: 15), bottom: nil),.viewSizeIncrease(minWidth: 20, maxWidth: 30, minHeight: 20, maxHeight: 30)])
 ```
 
-### Note: The scrollViewDidScroll function of HWNavigationView must be called from the scrollViewDidScroll function of ScrollView in the scrollViewDidScroll function of HWNavigationView must be called.
+### Note: The ViewDidScroll function of HWNavigationView should be invoked from the original Scrollview Delegate function, ViewDidScroll function.
 
 ```swift
 func scrollViewDidScroll(_ scrollView: UIScrollView) {
