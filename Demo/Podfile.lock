@@ -1,0 +1,16 @@
+PODS:
+  - HWNavigationView (1.0.2)
+
+DEPENDENCIES:
+  - HWNavigationView (~> 1.0)
+
+SPEC REPOS:
+  trunk:
+    - HWNavigationView
+
+SPEC CHECKSUMS:
+  HWNavigationView: bad7701afa91c3af07471d809ff403f1c4e44b7d
+
+PODFILE CHECKSUM: 0cf3d3ca2bbe1cd5f4b6be4492455fb03c03021e
+
+COCOAPODS: 1.9.3
