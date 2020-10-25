@@ -65,6 +65,8 @@ public class HWNavigationView: UIView {
     
     //MARK: private property
     
+    private var testStatusBarView:UIView = UIView()
+    
     private var currentYOffset:CGFloat = 0.0 {
         didSet {
             if currentYOffset < 0 {
