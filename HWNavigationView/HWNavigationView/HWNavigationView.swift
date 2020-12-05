@@ -8,8 +8,10 @@
 
 import UIKit
 
-public protocol HWNavigationViewDelegate:class {
-    func scrollViewDidScroll(navigationView:HWNavigationView,percent:CGFloat)
+@objc public protocol HWNavigationViewDelegate:class {
+    @objc optional func navigationViewWillStartAnimation(navigationView:HWNavigationView)
+    @objc optional func navigationViewEndAnimation(navigationView:HWNavigationView)
+    @objc optional func scrollViewDidScroll(navigationView:HWNavigationView,percent:CGFloat)
 }
 
 public class HWNavigationView: UIView {
@@ -132,7 +134,8 @@ public class HWNavigationView: UIView {
     }
     
     private func showEffects(percent:CGFloat) {
-        self.delegate?.scrollViewDidScroll(navigationView: self, percent: percent)
+        self.delegate?.navigationViewWillStartAnimation?(navigationView: self)
+        self.delegate?.scrollViewDidScroll?(navigationView: self, percent: percent)
         for i in 0..<self.effectObjects.count {
             let item:HWNavigationEffectObject = self.effectObjects[i]
             if let obj = item.obj {
@@ -252,6 +255,7 @@ public class HWNavigationView: UIView {
             })
             replaceConstant(object: self, from: from, to: to, percent: percent, layouts: heightLayouts)
         }
+        self.delegate?.navigationViewEndAnimation?(navigationView: self)
     }
     
     private func replaceConstant(object:UIView,from:CGFloat,to:CGFloat,percent:CGFloat,layouts:Array<NSLayoutConstraint>) {
