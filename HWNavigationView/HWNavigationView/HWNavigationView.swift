@@ -8,7 +8,7 @@
 
 import UIKit
 
-@objc public protocol HWNavigationViewDelegate:class {
+@objc public protocol HWNavigationViewDelegate: class {
     @objc optional func navigationViewWillStartAnimation(navigationView:HWNavigationView)
     @objc optional func navigationViewEndAnimation(navigationView:HWNavigationView)
     @objc optional func scrollViewDidScroll(navigationView:HWNavigationView,percent:CGFloat)
@@ -334,7 +334,11 @@ public class HWNavigationView: UIView {
     //MARK: public func
     
     public func scrollViewDidScroll(_ scrollView:UIScrollView) {
-        self.currentYOffset = scrollView.contentOffset.y
+        if !scrollView.isBottomBouncingHW {
+            if self.showEffetOffset < (scrollView.contentSize.height - scrollView.frame.height) {
+                self.currentYOffset = scrollView.contentOffset.y
+            }
+        }
     }
     
     public func addEffect(object:UIView,effets:Array<HWNavigationEffectType>) {
@@ -465,3 +469,37 @@ public class HWNavigationView: UIView {
 
 }
 
+extension UIScrollView {
+    
+    enum BouncingDirectionHW {
+        case none
+        case top
+        case bottom
+    }
+    
+    var isBouncingHW: Bool {
+        var isBouncing = false
+        if contentOffset.y >= (contentSize.height - bounds.size.height) {
+            isBouncing = true
+        } else if contentOffset.y < contentInset.top {
+            isBouncing = true
+        }
+        return isBouncing
+    }
+    
+    var isTopBouncingHW: Bool {
+        var isBouncing = false
+        if contentOffset.y < contentInset.top {
+            isBouncing = true
+        }
+        return isBouncing
+    }
+    
+    var isBottomBouncingHW: Bool {
+        var isBouncing = false
+        if contentOffset.y >= (contentSize.height - bounds.size.height) {
+            isBouncing = true
+        }
+        return isBouncing
+    }
+}
